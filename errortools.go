@@ -7,9 +7,9 @@ import (
 
 // Println prints error if not nil
 //
-func Println(err error) {
-	if err != nil {
-		fmt.Println(err)
+func Println(a ...interface{}) {
+	if a != nil {
+		fmt.Println(a...)
 	}
 }
 
@@ -17,7 +17,6 @@ func Println(err error) {
 //
 func Fatal(err error) {
 	if err != nil {
-		fmt.Println("hallo")
 		log.Fatal(err)
 	}
 }
