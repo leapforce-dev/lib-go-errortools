@@ -7,9 +7,9 @@ import (
 
 // Println prints error if not nil
 //
-func Println(a ...interface{}) {
-	if a != nil {
-		fmt.Println(a...)
+func Println(prefix string, err error) {
+	if err != nil {
+		fmt.Println(prefix, err)
 	}
 }
 
