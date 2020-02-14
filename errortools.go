@@ -25,9 +25,11 @@ func Fatal(err error) {
 
 // FatalSentry sends error to Sentry, prints it and exits if not nil
 //
-func FatalSentry(err error) {
+func FatalSentry(err error, isLive bool) {
 	if err != nil {
-		sentry.CaptureException(err)
+		if isLive {
+			sentry.CaptureException(err)
+		}
 		log.Fatal(err)
 	}
 }
