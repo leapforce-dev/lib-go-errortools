@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	sentry "github.com/getsentry/sentry-go"
+	"github.com/getsentry/sentry-go"
 )
 
 // Println prints error if not nil
