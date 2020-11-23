@@ -11,3 +11,11 @@ type Error struct {
 	Response *http.Response
 	Message  string
 }
+
+// ErrorMessage return message-only Error
+//
+func ErrorMessage(message string) *Error {
+	return &Error{
+		Message: message,
+	}
+}
