@@ -14,8 +14,14 @@ type Error struct {
 
 // ErrorMessage return message-only Error
 //
-func ErrorMessage(message string) *Error {
-	return &Error{
-		Message: message,
+func ErrorMessage(stringOrError interface{}) *Error {
+	errError, ok := stringOrError.(error)
+	if ok {
+		return &Error{Message: errError.Error()}
 	}
+	errString, ok := stringOrError.(string)
+	if ok {
+		return &Error{Message: errString}
+	}
+	return &Error{Message: "Invalid type passed to ErrorMessage."}
 }
