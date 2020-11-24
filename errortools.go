@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"reflect"
-	"strconv"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -26,51 +24,67 @@ func Fatal(err error) {
 	}
 }
 
+func captureError(err *Error, toSentry bool) {
+	if err != nil {
+		if toSentry {
+			if err.Response != nil {
+				setTag("ResponseStatusCode", err.Response.StatusCode)
+			} else {
+				removeTag("ResponseStatusCode")
+			}
+
+			if err.Request != nil {
+				b := []byte{}
+				_, _ = err.Request.Body.Read(b)
+
+				setContext("Body", b)
+			} else {
+				removeContext("Body")
+			}
+
+		}
+	}
+}
+
 // CaptureException sends error to Sentry, prints it and exits if not nil
 //
-func CaptureException(errorOrString interface{}, responseStatusCode int, data interface{}, toSentry bool) {
-	if errorOrString != nil {
-		var err error
+func CaptureException(err *Error, toSentry bool) {
 
-		errError, ok := errorOrString.(*error)
-		if ok {
-			err = *errError
-		} else {
-			errString, ok := errorOrString.(string)
-			if ok {
-				err = errors.New(errString)
-			} else {
-				err = fmt.Errorf("Error of type %s: %s", reflect.ValueOf(errorOrString).Kind(), fmt.Sprintf("%v", errorOrString))
-			}
-		}
-
+	if err != nil {
+		captureError(err, toSentry)
 		if toSentry {
-			setTagAndContext(responseStatusCode, data)
-			sentry.CaptureException(err)
+			sentry.CaptureException(errors.New(err.Message))
 		}
 		log.Fatal(err)
+		fmt.Println(err.Message)
 	}
 }
 
 // CaptureMessage sends message to Sentry, prints it and exits if not nil
 //
-func CaptureMessage(message string, responseStatusCode int, data interface{}, toSentry bool) {
-	if toSentry {
-		setTagAndContext(responseStatusCode, data)
-		sentry.CaptureMessage(message)
+func CaptureMessage(err *Error, toSentry bool) {
+
+	if err != nil {
+		captureError(err, toSentry)
+		if toSentry {
+			sentry.CaptureMessage(err.Message)
+		}
+		fmt.Println(err.Message)
 	}
-	fmt.Println(message)
 }
 
-func setTagAndContext(responseStatusCode int, data interface{}) {
-	if responseStatusCode > 0 {
-		sentry.CurrentHub().Scope().SetTag("ResponseStatusCode", strconv.Itoa(responseStatusCode))
-	} else {
-		sentry.CurrentHub().Scope().RemoveTag("ResponseStatusCode")
-	}
-	if data != nil {
-		sentry.CurrentHub().Scope().SetContext("Data", data)
-	} else {
-		sentry.CurrentHub().Scope().RemoveContext("Data")
-	}
+func setTag(key string, value interface{}) {
+	sentry.CurrentHub().Scope().SetTag(key, fmt.Sprintf("%v", value))
+}
+
+func removeTag(key string) {
+	sentry.CurrentHub().Scope().RemoveTag(key)
+}
+
+func setContext(key string, value interface{}) {
+	sentry.CurrentHub().Scope().SetContext(key, fmt.Sprintf("%v", value))
+}
+
+func removeContext(key string) {
+	sentry.CurrentHub().Scope().RemoveContext(key)
 }
