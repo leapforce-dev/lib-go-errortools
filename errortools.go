@@ -24,21 +24,33 @@ func Fatal(err error) {
 	}
 }
 
-func captureError(err *Error, toSentry bool) {
+func captureError(err interface{}, toSentry bool) *Error {
 	if err != nil {
+		e := new(Error)
+
+		if errError, ok := err.(*Error); ok {
+			e = errError
+		} else if errError, ok := err.(error); ok {
+			e = ErrorMessage(errError)
+		} else {
+			e = ErrorMessage(fmt.Sprintf("%v", err))
+		}
+
 		if toSentry {
-			if err.Response != nil {
-				setTag("ResponseStatusCode", err.Response.StatusCode)
+			if e.Response != nil {
+				setTag("ResponseStatusCode", e.Response.StatusCode)
+				setContext("ResponseStatus", e.Response.Status)
 			} else {
 				removeTag("ResponseStatusCode")
+				removeContext("ResponseStatus")
 			}
 
-			if err.Request != nil {
+			if e.Request != nil {
 				b := []byte{}
-				_, _ = err.Request.Body.Read(b)
+				_, _ = e.Request.Body.Read(b)
 
-				setContext("URL", err.Request.URL.String())
-				setContext("Method", err.Request.Method)
+				setContext("URL", e.Request.URL.String())
+				setContext("Method", e.Request.Method)
 				setContext("Body", b)
 			} else {
 				removeContext("URL")
@@ -47,20 +59,24 @@ func captureError(err *Error, toSentry bool) {
 			}
 
 		}
+
+		return e
 	}
+
+	return nil
 }
 
 // CaptureException sends error to Sentry, prints it and exits if not nil
 //
-func CaptureException(err *Error, toSentry bool) {
+func CaptureException(err interface{}, toSentry bool) {
 
 	if err != nil {
-		captureError(err, toSentry)
+		e := captureError(err, toSentry)
 		if toSentry {
-			sentry.CaptureException(errors.New(err.Message))
+			sentry.CaptureException(errors.New(e.Message))
 		}
 		log.Fatal(err)
-		fmt.Println(err.Message)
+		fmt.Println(e.Message)
 	}
 }
 
@@ -69,11 +85,11 @@ func CaptureException(err *Error, toSentry bool) {
 func CaptureMessage(err *Error, toSentry bool) {
 
 	if err != nil {
-		captureError(err, toSentry)
+		e := captureError(err, toSentry)
 		if toSentry {
-			sentry.CaptureMessage(err.Message)
+			sentry.CaptureMessage(e.Message)
 		}
-		fmt.Println(err.Message)
+		fmt.Println(e.Message)
 	}
 }
 
