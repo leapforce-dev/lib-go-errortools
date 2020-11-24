@@ -1,7 +1,9 @@
 package errortools
 
 import (
+	"fmt"
 	"net/http"
+	"reflect"
 )
 
 // Error stores enriched error information
@@ -19,18 +21,13 @@ func ErrorMessage(stringOrError interface{}) *Error {
 }
 
 func message(stringOrError interface{}) string {
-	if stringOrError == nil {
-		return ""
-	}
-	errError, ok := stringOrError.(error)
-	if ok {
+	if errError, ok := stringOrError.(error); ok {
 		return errError.Error()
 	}
-	errString, ok := stringOrError.(string)
-	if ok {
+	if errString, ok := stringOrError.(string); ok {
 		return errString
 	}
-	return "Invalid type passed to ErrorMessage."
+	return fmt.Sprintf("Invalid type %s passed to ErrorMessage.", reflect.TypeOf(stringOrError).Kind())
 }
 
 func (err *Error) SetRequest(request *http.Request) {

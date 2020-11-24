@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -25,7 +26,7 @@ func Fatal(err error) {
 }
 
 func captureError(err interface{}, toSentry bool) *Error {
-	if err != nil {
+	if !reflect.ValueOf(err).IsNil() {
 		e := new(Error)
 
 		if errError, ok := err.(*Error); ok {
@@ -33,29 +34,35 @@ func captureError(err interface{}, toSentry bool) *Error {
 		} else if errError, ok := err.(error); ok {
 			e = ErrorMessage(errError)
 		} else {
-			e = ErrorMessage(fmt.Sprintf("%v", err))
+			//e = ErrorMessage(fmt.Sprintf("%v", err))
+			e = ErrorMessage(nil)
 		}
 
 		if toSentry {
 			if e.Response != nil {
-				setTag("ResponseStatusCode", e.Response.StatusCode)
-				setContext("ResponseStatus", e.Response.Status)
+				setTag("response_status_code", e.Response.StatusCode)
+				setContext("response_status", e.Response.Status)
 			} else {
-				removeTag("ResponseStatusCode")
-				removeContext("ResponseStatus")
+				removeTag("response_status_code")
+				removeContext("response_status")
 			}
 
 			if e.Request != nil {
-				b := []byte{}
-				_, _ = e.Request.Body.Read(b)
+				setContext("url", e.Request.URL.String())
+				setContext("http_method", e.Request.Method)
 
-				setContext("URL", e.Request.URL.String())
-				setContext("Method", e.Request.Method)
-				setContext("Body", b)
+				if e.Request.Body != nil {
+					b := []byte{}
+					_, _ = e.Request.Body.Read(b)
+					setContext("http_body", b)
+				} else {
+					removeContext("http_body")
+				}
+
 			} else {
-				removeContext("URL")
-				removeContext("Method")
-				removeContext("Body")
+				removeContext("url")
+				removeContext("http_method")
+				removeContext("http_body")
 			}
 
 		}
@@ -69,14 +76,13 @@ func captureError(err interface{}, toSentry bool) *Error {
 // CaptureException sends error to Sentry, prints it and exits if not nil
 //
 func CaptureException(err interface{}, toSentry bool) {
+	if !reflect.ValueOf(err).IsNil() {
 
-	if err != nil {
 		e := captureError(err, toSentry)
 		if toSentry {
 			sentry.CaptureException(errors.New(e.Message))
 		}
 		log.Fatal(err)
-		fmt.Println(e.Message)
 	}
 }
 
