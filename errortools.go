@@ -37,8 +37,12 @@ func captureError(err *Error, toSentry bool) {
 				b := []byte{}
 				_, _ = err.Request.Body.Read(b)
 
+				setContext("URL", err.Request.URL.String())
+				setContext("Method", err.Request.Method)
 				setContext("Body", b)
 			} else {
+				removeContext("URL")
+				removeContext("Method")
 				removeContext("Body")
 			}
 
