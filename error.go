@@ -27,7 +27,10 @@ func message(stringOrError interface{}) string {
 	if errString, ok := stringOrError.(string); ok {
 		return errString
 	}
-	return fmt.Sprintf("Invalid type %s passed to ErrorMessage.", reflect.TypeOf(stringOrError).Kind())
+	if errString, ok := stringOrError.(*string); ok {
+		return *errString
+	}
+	return fmt.Sprintf("Invalid type %s (%s) passed to ErrorMessage.", reflect.TypeOf(stringOrError).Kind(), reflect.TypeOf(stringOrError))
 }
 
 func (err *Error) SetRequest(request *http.Request) {
