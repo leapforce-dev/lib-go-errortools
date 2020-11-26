@@ -58,28 +58,28 @@ func captureError(err interface{}, toSentry bool) *Error {
 				c = append(c, fmt.Sprintf("%s: %s", k, v))
 			}
 
-			setExtra("context", strings.Join(c, "\n"))
+			SetExtra("context", strings.Join(c, "\n"))
 		} else {
-			removeExtra("context")
+			RemoveExtra("context")
 		}
 
 		if e.Message != "" {
-			setExtra("error", e.Message)
+			SetExtra("error", e.Message)
 		} else {
-			removeExtra("error")
+			RemoveExtra("error")
 		}
 
 		if e.Response != nil {
 			setTag("response_status_code", e.Response.StatusCode)
-			setExtra("response_status", e.Response.Status)
+			SetExtra("response_status", e.Response.Status)
 		} else {
 			removeTag("response_status_code")
-			removeExtra("response_status")
+			RemoveExtra("response_status")
 		}
 
 		if e.Request != nil {
-			setExtra("url", e.Request.URL.String())
-			setExtra("http_method", e.Request.Method)
+			SetExtra("url", e.Request.URL.String())
+			SetExtra("http_method", e.Request.Method)
 
 			if e.Request.Body != nil {
 				readCloser, err := e.Request.GetBody()
@@ -88,18 +88,18 @@ func captureError(err interface{}, toSentry bool) *Error {
 				}
 				b, err := ioutil.ReadAll(readCloser)
 				if err == nil {
-					setExtra("http_body", fmt.Sprintf("%s", b))
+					SetExtra("http_body", fmt.Sprintf("%s", b))
 				} else {
-					setExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
+					SetExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
 				}
 			} else {
-				removeExtra("http_body")
+				RemoveExtra("http_body")
 			}
 
 		} else {
-			removeExtra("url")
-			removeExtra("http_method")
-			removeExtra("http_body")
+			RemoveExtra("url")
+			RemoveExtra("http_method")
+			RemoveExtra("http_body")
 		}
 	}
 
@@ -138,11 +138,11 @@ func removeTag(key string) {
 	sentry.CurrentHub().Scope().RemoveTag(key)
 }
 
-func setExtra(key string, value interface{}) {
+func SetExtra(key string, value interface{}) {
 	sentry.CurrentHub().Scope().SetExtra(key, fmt.Sprintf("%v", value))
 }
 
-func removeExtra(key string) {
+func RemoveExtra(key string) {
 	sentry.CurrentHub().Scope().RemoveExtra(key)
 }
 
