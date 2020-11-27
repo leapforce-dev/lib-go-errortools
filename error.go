@@ -9,15 +9,16 @@ import (
 // Error stores enriched error information
 //
 type Error struct {
-	Request  *http.Request
-	Response *http.Response
-	Message  string
+	request  *http.Request
+	response *http.Response
+	message  string
+	extras   *map[string]string
 }
 
 // ErrorMessage return message-only Error
 //
 func ErrorMessage(stringOrError interface{}) *Error {
-	return &Error{Message: message(stringOrError)}
+	return &Error{message: message(stringOrError)}
 }
 
 func message(stringOrError interface{}) string {
@@ -34,13 +35,26 @@ func message(stringOrError interface{}) string {
 }
 
 func (err *Error) SetRequest(request *http.Request) {
-	(*err).Request = request
+	(*err).request = request
 }
 
 func (err *Error) SetResponse(response *http.Response) {
-	(*err).Response = response
+	(*err).response = response
 }
 
 func (err *Error) SetMessage(stringOrError interface{}) {
-	(*err).Message = message(stringOrError)
+	(*err).message = message(stringOrError)
+}
+
+func (err *Error) SetExtra(key string, value string) {
+	if (*err).extras == nil {
+		m := make(map[string]string)
+		(*err).extras = &m
+	}
+
+	(*((*err).extras))[key] = value
+}
+
+func (err *Error) Message() string {
+	return err.message
 }

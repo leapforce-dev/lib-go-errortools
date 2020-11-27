@@ -29,14 +29,14 @@ func Fatal(err error) {
 	}
 }
 
-func captureError(err interface{}, toSentry bool) *Error {
+func captureError(err interface{}, toSentry bool) (func(), *Error) {
 	if err == nil {
-		return nil
+		return nil, nil
 	}
 
 	if reflect.TypeOf(err).Kind() == reflect.Ptr {
 		if reflect.ValueOf(err).IsNil() {
-			return nil
+			return nil, nil
 		}
 	}
 
@@ -50,6 +50,8 @@ func captureError(err interface{}, toSentry bool) *Error {
 		e = ErrorMessage(fmt.Sprintf("%s: %v", reflect.TypeOf(err).String(), err))
 	}
 
+	removeFunc := func() {}
+
 	if toSentry {
 		if context != nil {
 			c := []string{}
@@ -58,75 +60,95 @@ func captureError(err interface{}, toSentry bool) *Error {
 				c = append(c, fmt.Sprintf("%s: %s", k, v))
 			}
 
-			SetExtra("context", strings.Join(c, "\n"))
+			setExtra("context", strings.Join(c, "\n"))
 		} else {
-			RemoveExtra("context")
+			removeExtra("context")
 		}
 
-		if e.Message != "" {
-			SetExtra("error", e.Message)
+		if e.message != "" {
+			setExtra("error", e.message)
 		} else {
-			RemoveExtra("error")
+			removeExtra("error")
 		}
 
-		if e.Response != nil {
-			setTag("response_status_code", e.Response.StatusCode)
-			SetExtra("response_status", e.Response.Status)
+		if e.response != nil {
+			setTag("response_status_code", e.response.StatusCode)
+			setExtra("response_status", e.response.Status)
 		} else {
 			removeTag("response_status_code")
-			RemoveExtra("response_status")
+			removeExtra("response_status")
 		}
 
-		if e.Request != nil {
-			SetExtra("url", e.Request.URL.String())
-			SetExtra("http_method", e.Request.Method)
+		if e.request != nil {
+			setExtra("url", e.request.URL.String())
+			setExtra("http_method", e.request.Method)
 
-			if e.Request.Body != nil {
-				readCloser, err := e.Request.GetBody()
+			if e.request.Body != nil {
+				readCloser, err := e.request.GetBody()
 				if err != nil {
 					fmt.Println(err)
 				}
 				b, err := ioutil.ReadAll(readCloser)
 				if err == nil {
-					SetExtra("http_body", fmt.Sprintf("%s", b))
+					setExtra("http_body", fmt.Sprintf("%s", b))
 				} else {
-					SetExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
+					setExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
 				}
 			} else {
-				RemoveExtra("http_body")
+				removeExtra("http_body")
 			}
 
 		} else {
-			RemoveExtra("url")
-			RemoveExtra("http_method")
-			RemoveExtra("http_body")
+			removeExtra("url")
+			removeExtra("http_method")
+			removeExtra("http_body")
+		}
+
+		if e.extras != nil {
+			for key, value := range *(e.extras) {
+				setExtra(key, value)
+			}
+
+			removeFunc = func() {
+				for key, value := range *(e.extras) {
+					setExtra(key, value)
+				}
+			}
 		}
 	}
 
-	return e
+	return removeFunc, e
 }
 
 // CaptureException sends error to Sentry, prints it and exits if not nil
 //
 func CaptureException(err interface{}, toSentry bool) {
-	e := captureError(err, toSentry)
+	f, e := captureError(err, toSentry)
 	if e != nil {
 		if toSentry {
-			sentry.CaptureException(errors.New(e.Message))
+			sentry.CaptureException(errors.New(e.message))
 		}
-		log.Fatal(e.Message)
+		log.Fatal(e.message)
+	}
+
+	if f != nil {
+		f()
 	}
 }
 
 // CaptureMessage sends message to Sentry, prints it and exits if not nil
 //
 func CaptureMessage(err interface{}, toSentry bool) {
-	e := captureError(err, toSentry)
+	f, e := captureError(err, toSentry)
 	if e != nil {
 		if toSentry {
-			sentry.CaptureMessage(e.Message)
+			sentry.CaptureMessage(e.message)
 		}
-		fmt.Println(e.Message)
+		fmt.Println(e.message)
+	}
+
+	if f != nil {
+		f()
 	}
 }
 
@@ -138,11 +160,11 @@ func removeTag(key string) {
 	sentry.CurrentHub().Scope().RemoveTag(key)
 }
 
-func SetExtra(key string, value interface{}) {
+func setExtra(key string, value interface{}) {
 	sentry.CurrentHub().Scope().SetExtra(key, fmt.Sprintf("%v", value))
 }
 
-func RemoveExtra(key string) {
+func removeExtra(key string) {
 	sentry.CurrentHub().Scope().RemoveExtra(key)
 }
 
@@ -155,5 +177,5 @@ func SetContext(key string, value string) {
 
 func RemoveContext(key string) {
 	delete(context, key)
-	//sentry.CurrentHub().Scope().RemoveExtra("context")
+	//sentry.CurrentHub().Scope().removeExtra("context")
 }
