@@ -66,9 +66,9 @@ func captureError(err interface{}, toSentry bool) (func(), *Error) {
 		}
 
 		if e.message != "" {
-			setExtra("error", e.message)
+			setExtra("message", e.message)
 		} else {
-			removeExtra("error")
+			removeExtra("message")
 		}
 
 		if e.response != nil {
@@ -122,13 +122,20 @@ func captureError(err interface{}, toSentry bool) (func(), *Error) {
 
 // CaptureException sends error to Sentry, prints it and exits if not nil
 //
-func CaptureException(err interface{}, toSentry bool) {
+func captureException(err interface{}, level sentry.Level, toSentry bool) {
+	sentry.CurrentHub().Scope().SetLevel(level)
+	defer sentry.CurrentHub().Scope().SetLevel("")
+
 	f, e := captureError(err, toSentry)
 	if e != nil {
 		if toSentry {
 			sentry.CaptureException(errors.New(e.message))
 		}
-		log.Fatal(e.message)
+		if level == sentry.LevelFatal {
+			log.Fatal(e.message)
+		} else {
+			fmt.Println(e.message)
+		}
 	}
 
 	if f != nil {
@@ -136,9 +143,12 @@ func CaptureException(err interface{}, toSentry bool) {
 	}
 }
 
-// CaptureMessage sends message to Sentry, prints it and exits if not nil
+// captureMessage sends message to Sentry, prints it and exits if not nil
 //
-func CaptureMessage(err interface{}, toSentry bool) {
+func captureMessage(err interface{}, level sentry.Level, toSentry bool) {
+	sentry.CurrentHub().Scope().SetLevel(level)
+	defer sentry.CurrentHub().Scope().SetLevel("")
+
 	f, e := captureError(err, toSentry)
 	if e != nil {
 		if toSentry {
@@ -150,6 +160,30 @@ func CaptureMessage(err interface{}, toSentry bool) {
 	if f != nil {
 		f()
 	}
+}
+
+// CaptureInfo sends info to Sentry, prints it and exits if not nil
+//
+func CaptureInfo(err interface{}, toSentry bool) {
+	captureMessage(err, sentry.LevelInfo, toSentry)
+}
+
+// CaptureWarning sends warning to Sentry, prints it
+//
+func CaptureWarning(err interface{}, toSentry bool) {
+	captureMessage(err, sentry.LevelWarning, toSentry)
+}
+
+// CaptureError sends error to Sentry, prints it
+//
+func CaptureError(err interface{}, toSentry bool) {
+	captureException(err, sentry.LevelError, toSentry)
+}
+
+// CaptureFatal sends fatal to Sentry, prints it and exits if not nil
+//
+func CaptureFatal(err interface{}, toSentry bool) {
+	captureException(err, sentry.LevelFatal, toSentry)
 }
 
 func setTag(key string, value interface{}) {
