@@ -55,6 +55,14 @@ func (err *Error) SetExtra(key string, value string) {
 	(*((*err).extras))[key] = value
 }
 
+func (err *Error) Request() *http.Request {
+	return err.request
+}
+
+func (err *Error) Response() *http.Response {
+	return err.response
+}
+
 func (err *Error) Message() string {
 	return err.message
 }
