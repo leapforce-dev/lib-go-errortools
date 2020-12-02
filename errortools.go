@@ -202,11 +202,11 @@ func removeExtra(key string) {
 	sentry.CurrentHub().Scope().RemoveExtra(key)
 }
 
-func SetContext(key string, value string) {
+func SetContext(key string, value interface{}) {
 	if context == nil {
 		context = make(map[string]string)
 	}
-	context[key] = value
+	context[key] = fmt.Sprintf("%v", value)
 }
 
 func RemoveContext(key string) {
