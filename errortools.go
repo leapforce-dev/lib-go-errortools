@@ -124,7 +124,7 @@ func captureError(err interface{}) (func(), *Error) {
 func captureException(err interface{}, level sentry.Level) {
 
 	f, e := captureError(err)
-	fmt.Println(e)
+
 	if e != nil {
 		sentry.CurrentHub().Scope().SetLevel(level)
 		defer sentry.CurrentHub().Scope().SetLevel("")
