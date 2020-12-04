@@ -123,12 +123,12 @@ func captureError(err interface{}, toSentry bool) (func(), *Error) {
 // CaptureException sends error to Sentry, prints it and exits if not nil
 //
 func captureException(err interface{}, level sentry.Level, toSentry bool) {
-	sentry.CurrentHub().Scope().SetLevel(level)
-	defer sentry.CurrentHub().Scope().SetLevel("")
 
 	f, e := captureError(err, toSentry)
 	if e != nil {
 		if toSentry {
+			sentry.CurrentHub().Scope().SetLevel(level)
+			defer sentry.CurrentHub().Scope().SetLevel("")
 			sentry.CaptureException(errors.New(e.message))
 		}
 		if level == sentry.LevelFatal {
@@ -146,12 +146,12 @@ func captureException(err interface{}, level sentry.Level, toSentry bool) {
 // captureMessage sends message to Sentry, prints it and exits if not nil
 //
 func captureMessage(err interface{}, level sentry.Level, toSentry bool) {
-	sentry.CurrentHub().Scope().SetLevel(level)
-	defer sentry.CurrentHub().Scope().SetLevel("")
 
 	f, e := captureError(err, toSentry)
 	if e != nil {
 		if toSentry {
+			sentry.CurrentHub().Scope().SetLevel(level)
+			defer sentry.CurrentHub().Scope().SetLevel("")
 			sentry.CaptureMessage(e.message)
 		}
 		fmt.Println(e.message)
