@@ -6,7 +6,15 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-func InitSentry(dsn string) {
+const SentryDSNTest string = "https://da7ff9970b3f4fb6b7f84ffeee423f87@o326694.ingest.sentry.io/5510091"
+
+// InitSentry initializes logging to sentry
+//
+func InitSentry(dsn string, isLive bool) {
+	if !isLive {
+		// log to sentry test project
+		dsn = SentryDSNTest
+	}
 	// We need to use the sync transport (which is not the default),
 	// otherwise if you use "log.Fatal()" the program will exit before the
 	// error is sent to Sentry.
