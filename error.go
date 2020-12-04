@@ -9,10 +9,11 @@ import (
 // Error stores enriched error information
 //
 type Error struct {
-	request  *http.Request
-	response *http.Response
-	message  string
-	extras   *map[string]string
+	originalError error
+	request       *http.Request
+	response      *http.Response
+	message       string
+	extras        *map[string]string
 }
 
 // ErrorMessage return message-only Error
@@ -53,6 +54,10 @@ func (err *Error) SetExtra(key string, value string) {
 	}
 
 	(*((*err).extras))[key] = value
+}
+
+func (err *Error) SetType(value string) {
+	err.SetExtra(KeyExceptionType, value)
 }
 
 func (err *Error) Request() *http.Request {

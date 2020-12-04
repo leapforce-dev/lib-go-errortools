@@ -46,6 +46,7 @@ func captureError(err interface{}) (func(), *Error) {
 		e = errError
 	} else if errError, ok := err.(error); ok {
 		e = ErrorMessage(errError)
+		e.originalError = errError
 	} else {
 		e = ErrorMessage(fmt.Sprintf("%s: %v", reflect.TypeOf(err).String(), err))
 	}
@@ -123,10 +124,16 @@ func captureError(err interface{}) (func(), *Error) {
 func captureException(err interface{}, level sentry.Level) {
 
 	f, e := captureError(err)
+	fmt.Println(e)
 	if e != nil {
 		sentry.CurrentHub().Scope().SetLevel(level)
 		defer sentry.CurrentHub().Scope().SetLevel("")
-		sentry.CaptureException(errors.New(e.message))
+
+		if e.originalError != nil {
+			sentry.CaptureException(e.originalError)
+		} else {
+			sentry.CaptureException(errors.New(e.message))
+		}
 
 		if level == sentry.LevelFatal {
 			log.Fatal(e.message)
