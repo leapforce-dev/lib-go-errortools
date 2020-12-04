@@ -29,7 +29,7 @@ func Fatal(err error) {
 	}
 }
 
-func captureError(err interface{}, toSentry bool) (func(), *Error) {
+func captureError(err interface{}) (func(), *Error) {
 	if err == nil {
 		return nil, nil
 	}
@@ -52,67 +52,65 @@ func captureError(err interface{}, toSentry bool) (func(), *Error) {
 
 	removeFunc := func() {}
 
-	if toSentry {
-		if context != nil {
-			c := []string{}
+	if context != nil {
+		c := []string{}
 
-			for k, v := range context {
-				c = append(c, fmt.Sprintf("%s: %s", k, v))
+		for k, v := range context {
+			c = append(c, fmt.Sprintf("%s: %s", k, v))
+		}
+
+		setExtra("context", strings.Join(c, "\n"))
+	} else {
+		removeExtra("context")
+	}
+
+	if e.message != "" {
+		setExtra("message", e.message)
+	} else {
+		removeExtra("message")
+	}
+
+	if e.response != nil {
+		setTag("response_status_code", e.response.StatusCode)
+		setExtra("response_status", e.response.Status)
+	} else {
+		removeTag("response_status_code")
+		removeExtra("response_status")
+	}
+
+	if e.request != nil {
+		setExtra("url", e.request.URL.String())
+		setExtra("http_method", e.request.Method)
+
+		if e.request.Body != nil {
+			readCloser, err := e.request.GetBody()
+			if err != nil {
+				fmt.Println(err)
 			}
-
-			setExtra("context", strings.Join(c, "\n"))
-		} else {
-			removeExtra("context")
-		}
-
-		if e.message != "" {
-			setExtra("message", e.message)
-		} else {
-			removeExtra("message")
-		}
-
-		if e.response != nil {
-			setTag("response_status_code", e.response.StatusCode)
-			setExtra("response_status", e.response.Status)
-		} else {
-			removeTag("response_status_code")
-			removeExtra("response_status")
-		}
-
-		if e.request != nil {
-			setExtra("url", e.request.URL.String())
-			setExtra("http_method", e.request.Method)
-
-			if e.request.Body != nil {
-				readCloser, err := e.request.GetBody()
-				if err != nil {
-					fmt.Println(err)
-				}
-				b, err := ioutil.ReadAll(readCloser)
-				if err == nil {
-					setExtra("http_body", fmt.Sprintf("%s", b))
-				} else {
-					setExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
-				}
+			b, err := ioutil.ReadAll(readCloser)
+			if err == nil {
+				setExtra("http_body", fmt.Sprintf("%s", b))
 			} else {
-				removeExtra("http_body")
+				setExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
 			}
-
 		} else {
-			removeExtra("url")
-			removeExtra("http_method")
 			removeExtra("http_body")
 		}
 
-		if e.extras != nil {
+	} else {
+		removeExtra("url")
+		removeExtra("http_method")
+		removeExtra("http_body")
+	}
+
+	if e.extras != nil {
+		for key, value := range *(e.extras) {
+			setExtra(key, value)
+		}
+
+		removeFunc = func() {
 			for key, value := range *(e.extras) {
 				setExtra(key, value)
-			}
-
-			removeFunc = func() {
-				for key, value := range *(e.extras) {
-					setExtra(key, value)
-				}
 			}
 		}
 	}
@@ -122,15 +120,14 @@ func captureError(err interface{}, toSentry bool) (func(), *Error) {
 
 // CaptureException sends error to Sentry, prints it and exits if not nil
 //
-func captureException(err interface{}, level sentry.Level, toSentry bool) {
+func captureException(err interface{}, level sentry.Level) {
 
-	f, e := captureError(err, toSentry)
+	f, e := captureError(err)
 	if e != nil {
-		if toSentry {
-			sentry.CurrentHub().Scope().SetLevel(level)
-			defer sentry.CurrentHub().Scope().SetLevel("")
-			sentry.CaptureException(errors.New(e.message))
-		}
+		sentry.CurrentHub().Scope().SetLevel(level)
+		defer sentry.CurrentHub().Scope().SetLevel("")
+		sentry.CaptureException(errors.New(e.message))
+
 		if level == sentry.LevelFatal {
 			log.Fatal(e.message)
 		} else {
@@ -145,15 +142,14 @@ func captureException(err interface{}, level sentry.Level, toSentry bool) {
 
 // captureMessage sends message to Sentry, prints it and exits if not nil
 //
-func captureMessage(err interface{}, level sentry.Level, toSentry bool) {
+func captureMessage(err interface{}, level sentry.Level) {
 
-	f, e := captureError(err, toSentry)
+	f, e := captureError(err)
 	if e != nil {
-		if toSentry {
-			sentry.CurrentHub().Scope().SetLevel(level)
-			defer sentry.CurrentHub().Scope().SetLevel("")
-			sentry.CaptureMessage(e.message)
-		}
+		sentry.CurrentHub().Scope().SetLevel(level)
+		defer sentry.CurrentHub().Scope().SetLevel("")
+		sentry.CaptureMessage(e.message)
+
 		fmt.Println(e.message)
 	}
 
@@ -164,26 +160,26 @@ func captureMessage(err interface{}, level sentry.Level, toSentry bool) {
 
 // CaptureInfo sends info to Sentry, prints it and exits if not nil
 //
-func CaptureInfo(err interface{}, toSentry bool) {
-	captureMessage(err, sentry.LevelInfo, toSentry)
+func CaptureInfo(err interface{}) {
+	captureMessage(err, sentry.LevelInfo)
 }
 
 // CaptureWarning sends warning to Sentry, prints it
 //
-func CaptureWarning(err interface{}, toSentry bool) {
-	captureMessage(err, sentry.LevelWarning, toSentry)
+func CaptureWarning(err interface{}) {
+	captureMessage(err, sentry.LevelWarning)
 }
 
 // CaptureError sends error to Sentry, prints it
 //
-func CaptureError(err interface{}, toSentry bool) {
-	captureException(err, sentry.LevelError, toSentry)
+func CaptureError(err interface{}) {
+	captureException(err, sentry.LevelError)
 }
 
 // CaptureFatal sends fatal to Sentry, prints it and exits if not nil
 //
-func CaptureFatal(err interface{}, toSentry bool) {
-	captureException(err, sentry.LevelFatal, toSentry)
+func CaptureFatal(err interface{}) {
+	captureException(err, sentry.LevelFatal)
 }
 
 func setTag(key string, value interface{}) {
