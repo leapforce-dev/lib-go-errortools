@@ -23,7 +23,7 @@ func InitSentry(dsn string, isLive bool) {
 	beforeSend := func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 		if event.Exception != nil {
 			for i := range event.Exception {
-				exceptionType := event.Message
+				exceptionType := event.Exception[i].Value
 				et, ok := event.Extra[KeyExceptionType]
 				if ok {
 					exceptionType = fmt.Sprintf("%v", et)
