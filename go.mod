@@ -1,5 +1,5 @@
 module github.com/leapforce-libraries/go_errortools
 
-go 1.13
+go 1.15
 
-require github.com/getsentry/sentry-go v0.5.1
+require github.com/getsentry/sentry-go v0.9.0

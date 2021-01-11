@@ -47,6 +47,10 @@ func captureError(err interface{}) (func(), *Error) {
 	} else if errError, ok := err.(error); ok {
 		e = ErrorMessage(errError)
 		e.originalError = errError
+	} else if errError, ok := err.(string); ok {
+		e = ErrorMessage(errError)
+	} else if errError, ok := err.(*string); ok {
+		e = ErrorMessage(errError)
 	} else {
 		e = ErrorMessage(fmt.Sprintf("%s: %v", reflect.TypeOf(err).String(), err))
 	}
