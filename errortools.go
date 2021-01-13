@@ -12,6 +12,7 @@ import (
 )
 
 var context map[string]string
+var modifyMessageFunction *func(message string) string
 
 // Println prints error if not nil
 //
@@ -53,6 +54,10 @@ func captureError(err interface{}) (func(), *Error) {
 		e = ErrorMessage(errError)
 	} else {
 		e = ErrorMessage(fmt.Sprintf("%s: %v", reflect.TypeOf(err).String(), err))
+	}
+
+	if modifyMessageFunction != nil {
+		e.SetMessage((*modifyMessageFunction)(e.Message()))
 	}
 
 	removeFunc := func() {}
@@ -219,4 +224,12 @@ func SetContext(key string, value interface{}) {
 func RemoveContext(key string) {
 	delete(context, key)
 	//sentry.CurrentHub().Scope().removeExtra("context")
+}
+
+func SetModifyMessageFunction(function *func(message string) string) {
+	modifyMessageFunction = function
+}
+
+func RemoveModifyMessageFunction() {
+	modifyMessageFunction = nil
 }
