@@ -13,6 +13,7 @@ import (
 
 var context map[string]string
 var modifyMessageFunction *func(message string) string
+var errorCount int
 
 // Println prints error if not nil
 //
@@ -189,6 +190,7 @@ func CaptureWarning(err interface{}) {
 // CaptureError sends error to Sentry, prints it
 //
 func CaptureError(err interface{}) {
+	errorCount++
 	captureException(err, sentry.LevelError)
 }
 
@@ -232,4 +234,12 @@ func SetModifyMessageFunction(function *func(message string) string) {
 
 func RemoveModifyMessageFunction() {
 	modifyMessageFunction = nil
+}
+
+func Count() int {
+	return errorCount
+}
+
+func ResetCount() {
+	errorCount = 0
 }
