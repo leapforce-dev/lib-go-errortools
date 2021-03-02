@@ -148,6 +148,7 @@ func captureException(err interface{}, level sentry.Level) {
 		if level == sentry.LevelFatal {
 			log.Fatal(e.message)
 		} else {
+			errorCount++
 			fmt.Println(e.message)
 		}
 	}
@@ -190,7 +191,6 @@ func CaptureWarning(err interface{}) {
 // CaptureError sends error to Sentry, prints it
 //
 func CaptureError(err interface{}) {
-	errorCount++
 	captureException(err, sentry.LevelError)
 }
 
