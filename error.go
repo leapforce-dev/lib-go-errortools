@@ -47,7 +47,7 @@ func (err *Error) SetMessage(stringOrError interface{}) {
 	(*err).message = message(stringOrError)
 }
 
-func (err *Error) SetExtra(key string, value string) {
+func (err *Error) SetContext(key string, value string) {
 	if (*err).extras == nil {
 		m := make(map[string]string)
 		(*err).extras = &m
@@ -57,7 +57,7 @@ func (err *Error) SetExtra(key string, value string) {
 }
 
 func (err *Error) SetType(value string) {
-	err.SetExtra(KeyExceptionType, value)
+	err.SetContext(KeyExceptionType, value)
 }
 
 func (err *Error) Request() *http.Request {

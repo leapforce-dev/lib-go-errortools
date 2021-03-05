@@ -70,28 +70,28 @@ func captureError(err interface{}) (func(), *Error) {
 			c = append(c, fmt.Sprintf("%s: %s", k, v))
 		}
 
-		setExtra("context", strings.Join(c, "\n"))
+		setContext("context", strings.Join(c, "\n"))
 	} else {
-		removeExtra("context")
+		removeContext("context")
 	}
 
 	if e.message != "" {
-		setExtra("message", e.message)
+		setContext("message", e.message)
 	} else {
-		removeExtra("message")
+		removeContext("message")
 	}
 
 	if e.response != nil {
 		setTag("response_status_code", e.response.StatusCode)
-		setExtra("response_status", e.response.Status)
+		setContext("response_status", e.response.Status)
 	} else {
 		removeTag("response_status_code")
-		removeExtra("response_status")
+		removeContext("response_status")
 	}
 
 	if e.request != nil {
-		setExtra("url", e.request.URL.String())
-		setExtra("http_method", e.request.Method)
+		setContext("url", e.request.URL.String())
+		setContext("http_method", e.request.Method)
 
 		if e.request.Body != nil {
 			readCloser, err := e.request.GetBody()
@@ -100,30 +100,18 @@ func captureError(err interface{}) (func(), *Error) {
 			}
 			b, err := ioutil.ReadAll(readCloser)
 			if err == nil {
-				setExtra("http_body", fmt.Sprintf("%s", b))
+				setContext("http_body", fmt.Sprintf("%s", b))
 			} else {
-				setExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
+				setContext("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
 			}
 		} else {
-			removeExtra("http_body")
+			removeContext("http_body")
 		}
 
 	} else {
-		removeExtra("url")
-		removeExtra("http_method")
-		removeExtra("http_body")
-	}
-
-	if e.extras != nil {
-		for key, value := range *(e.extras) {
-			setExtra(key, value)
-		}
-
-		removeFunc = func() {
-			for key, value := range *(e.extras) {
-				setExtra(key, value)
-			}
-		}
+		removeContext("url")
+		removeContext("http_method")
+		removeContext("http_body")
 	}
 
 	return removeFunc, e
@@ -208,12 +196,12 @@ func removeTag(key string) {
 	sentry.CurrentHub().Scope().RemoveTag(key)
 }
 
-func setExtra(key string, value interface{}) {
-	sentry.CurrentHub().Scope().SetExtra(key, fmt.Sprintf("%v", value))
+func setContext(key string, value interface{}) {
+	sentry.CurrentHub().Scope().SetContext(key, fmt.Sprintf("%v", value))
 }
 
-func removeExtra(key string) {
-	sentry.CurrentHub().Scope().RemoveExtra(key)
+func removeContext(key string) {
+	sentry.CurrentHub().Scope().RemoveContext(key)
 }
 
 func SetContext(key string, value interface{}) {
@@ -225,7 +213,7 @@ func SetContext(key string, value interface{}) {
 
 func RemoveContext(key string) {
 	delete(context, key)
-	//sentry.CurrentHub().Scope().removeExtra("context")
+	//sentry.CurrentHub().Scope().removeContext("context")
 }
 
 func SetModifyMessageFunction(function *func(message string) string) {
