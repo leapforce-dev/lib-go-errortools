@@ -24,10 +24,10 @@ func InitSentry(dsn string, isLive bool) {
 		if event.Exception != nil {
 			for i := range event.Exception {
 				exceptionType := event.Exception[i].Value
-				et, ok := event.Contexts[KeyExceptionType]
+				et, ok := event.Extra[KeyExceptionType]
 				if ok {
 					exceptionType = fmt.Sprintf("%v", et)
-					delete(event.Contexts, KeyExceptionType)
+					delete(event.Extra, KeyExceptionType)
 				}
 
 				event.Exception[i].Type = exceptionType
