@@ -16,13 +16,22 @@ type Error struct {
 	extras        *map[string]string
 }
 
-// ErrorMessage return message-only Error
+// ErrorMessage returns message-only Error
 //
 func ErrorMessage(stringOrError interface{}) *Error {
 	return &Error{message: message(stringOrError)}
 }
 
+// ErrorMessagef returns formatted message-only Error
+//
+func ErrorMessagef(format string, a ...interface{}) *Error {
+	return &Error{message: fmt.Sprintf(format, a...)}
+}
+
 func message(stringOrError interface{}) string {
+	if errError, ok := stringOrError.(*Error); ok {
+		return errError.Message()
+	}
 	if errError, ok := stringOrError.(error); ok {
 		return errError.Error()
 	}
