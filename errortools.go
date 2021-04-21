@@ -182,10 +182,22 @@ func CaptureInfo(err interface{}) {
 	captureMessage(err, sentry.LevelInfo)
 }
 
+// CaptureInfof returns formatted message-only Error
+//
+func CaptureInfof(format string, a ...interface{}) {
+	CaptureInfo(fmt.Sprintf(format, a...))
+}
+
 // CaptureWarning sends warning to Sentry, prints it
 //
 func CaptureWarning(err interface{}) {
 	captureMessage(err, sentry.LevelWarning)
+}
+
+// CaptureWarningf returns formatted message-only Error
+//
+func CaptureWarningf(format string, a ...interface{}) {
+	CaptureWarning(fmt.Sprintf(format, a...))
 }
 
 // CaptureError sends error to Sentry, prints it
@@ -194,10 +206,22 @@ func CaptureError(err interface{}) {
 	captureException(err, sentry.LevelError)
 }
 
+// CaptureErrorf returns formatted message-only Error
+//
+func CaptureErrorf(format string, a ...interface{}) {
+	CaptureError(fmt.Sprintf(format, a...))
+}
+
 // CaptureFatal sends fatal to Sentry, prints it and exits if not nil
 //
 func CaptureFatal(err interface{}) {
 	captureException(err, sentry.LevelFatal)
+}
+
+// CaptureFatalf returns formatted message-only Error
+//
+func CaptureFatalf(format string, a ...interface{}) {
+	CaptureFatal(fmt.Sprintf(format, a...))
 }
 
 func setTag(key string, value interface{}) {
