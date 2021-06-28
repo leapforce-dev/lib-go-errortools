@@ -120,8 +120,8 @@ func captureError(err interface{}) (func(), *Error) {
 		}
 
 		removeFunc = func() {
-			for key, value := range *(e.extras) {
-				setExtra(key, value)
+			for key := range *(e.extras) {
+				removeExtra(key)
 			}
 		}
 	}
