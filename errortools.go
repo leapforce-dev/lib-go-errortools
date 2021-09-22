@@ -7,11 +7,13 @@ import (
 	"log"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/getsentry/sentry-go"
 )
 
 var context map[string]string
+var contextMutex = sync.RWMutex{}
 var modifyMessageFunction *func(message string) string
 var errorCount int
 
@@ -66,9 +68,11 @@ func captureError(err interface{}) (func(), *Error) {
 	if context != nil {
 		c := []string{}
 
+		contextMutex.RLock()
 		for k, v := range context {
 			c = append(c, fmt.Sprintf("%s: %s", k, v))
 		}
+		contextMutex.RUnlock()
 
 		setExtra("context", strings.Join(c, "\n"))
 	} else {
@@ -244,11 +248,15 @@ func SetContext(key string, value interface{}) {
 	if context == nil {
 		context = make(map[string]string)
 	}
+	contextMutex.Lock()
 	context[key] = fmt.Sprintf("%v", value)
+	contextMutex.Unlock()
 }
 
 func RemoveContext(key string) {
+	contextMutex.Lock()
 	delete(context, key)
+	contextMutex.Unlock()
 	//sentry.CurrentHub().Scope().removeExtra("context")
 }
 
