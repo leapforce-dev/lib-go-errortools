@@ -85,6 +85,8 @@ func captureError(err interface{}) (func(), *Error) {
 		removeExtra("message")
 	}
 
+	setFingerprint(e.fingerprint)
+
 	if e.response != nil {
 		setTag("response_status_code", e.response.StatusCode)
 		setExtra("response_status", e.response.Status)
@@ -104,7 +106,7 @@ func captureError(err interface{}) (func(), *Error) {
 			}
 			b, err := ioutil.ReadAll(readCloser)
 			if err == nil {
-				setExtra("http_body", fmt.Sprintf("%s", b))
+				setExtra("http_body", string(b))
 			} else {
 				setExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
 			}
@@ -242,6 +244,14 @@ func setExtra(key string, value interface{}) {
 
 func removeExtra(key string) {
 	sentry.CurrentHub().Scope().RemoveExtra(key)
+}
+
+func setFingerprint(fingerprint *[]string) {
+	_fingerprint := []string{}
+	if fingerprint != nil {
+		_fingerprint = *fingerprint
+	}
+	sentry.CurrentHub().Scope().SetFingerprint(_fingerprint)
 }
 
 func SetContext(key string, value interface{}) {

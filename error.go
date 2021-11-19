@@ -13,6 +13,7 @@ type Error struct {
 	request       *http.Request
 	response      *http.Response
 	message       string
+	fingerprint   *[]string
 	extras        *map[string]string
 }
 
@@ -54,6 +55,14 @@ func (err *Error) SetResponse(response *http.Response) {
 
 func (err *Error) SetMessage(stringOrError interface{}) {
 	(*err).message = message(stringOrError)
+}
+
+func (err *Error) SetMessagef(format string, a ...interface{}) {
+	(*err).message = message(fmt.Sprintf(format, a...))
+}
+
+func (err *Error) SetFingerprint(fingerprint *[]string) {
+	(*err).fingerprint = fingerprint
 }
 
 func (err *Error) SetExtra(key string, value string) {
