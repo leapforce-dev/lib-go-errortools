@@ -3,13 +3,12 @@ package errortools
 import (
 	"errors"
 	"fmt"
+	sentry "github.com/getsentry/sentry-go"
 	"io/ioutil"
 	"log"
 	"reflect"
 	"strings"
 	"sync"
-
-	"github.com/getsentry/sentry-go"
 )
 
 var context map[string]string
@@ -100,11 +99,7 @@ func captureError(err interface{}) (func(), *Error) {
 		setExtra("http_method", e.request.Method)
 
 		if e.request.Body != nil {
-			readCloser, err := e.request.GetBody()
-			if err != nil {
-				fmt.Println(err)
-			}
-			b, err := ioutil.ReadAll(readCloser)
+			b, err := ioutil.ReadAll(e.request.Body)
 			if err == nil {
 				setExtra("http_body", string(b))
 			} else {
