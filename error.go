@@ -11,6 +11,7 @@ import (
 type Error struct {
 	originalError error
 	request       *http.Request
+	body          []byte
 	response      *http.Response
 	message       string
 	fingerprint   *[]string
@@ -47,6 +48,10 @@ func message(stringOrError interface{}) string {
 
 func (err *Error) SetRequest(request *http.Request) {
 	(*err).request = request
+}
+
+func (err *Error) SetBody(b []byte) {
+	(*err).body = b
 }
 
 func (err *Error) SetResponse(response *http.Response) {
