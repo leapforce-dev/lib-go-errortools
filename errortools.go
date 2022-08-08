@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	sentry "github.com/getsentry/sentry-go"
-	"io/ioutil"
 	"log"
 	"reflect"
 	"strings"
@@ -98,13 +97,18 @@ func captureError(err interface{}) (func(), *Error) {
 		setExtra("url", e.request.URL.String())
 		setExtra("http_method", e.request.Method)
 
-		if e.request.Body != nil {
+		/*if e.request.Body != nil {
 			b, err := ioutil.ReadAll(e.request.Body)
 			if err == nil {
 				setExtra("http_body", string(b))
 			} else {
 				setExtra("http_body", fmt.Sprintf("Error reading body: %s", err.Error()))
 			}
+		} else {
+			removeExtra("http_body")
+		}*/
+		if e.body != nil {
+			setExtra("http_body", string(e.body))
 		} else {
 			removeExtra("http_body")
 		}
