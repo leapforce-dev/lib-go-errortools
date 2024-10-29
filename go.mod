@@ -1,10 +1,10 @@
-module github.com/leapforce-libraries/go_errortools
+module github.com/leapforce-dev/lib-go-errortools
 
-go 1.20
+go 1.22
 
-require github.com/getsentry/sentry-go v0.19.0
+require github.com/getsentry/sentry-go v0.29.1
 
 require (
-	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )
