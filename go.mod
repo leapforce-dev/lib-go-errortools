@@ -1,4 +1,4 @@
-module github.com/leapforce-dev/lib-go-errortools
+module github.com/leapforce-libraries/go_errortools
 
 go 1.22
 

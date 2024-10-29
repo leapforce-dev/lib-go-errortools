@@ -3,7 +3,7 @@ package errortools
 import (
 	"errors"
 	"fmt"
-	sentry "github.com/getsentry/sentry-go"
+	"github.com/getsentry/sentry-go"
 	"log"
 	"reflect"
 	"strings"

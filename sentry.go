@@ -2,9 +2,8 @@ package errortools
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/getsentry/sentry-go"
+	"time"
 )
 
 const (
